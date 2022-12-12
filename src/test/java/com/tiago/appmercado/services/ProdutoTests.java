@@ -1,48 +1,88 @@
 package com.tiago.appmercado.services;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import java.util.ArrayList;
+import java.util.Optional;
 
-import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
 
 import com.tiago.appmercado.model.Produto;
-import com.tiago.appmercado.service.IProdutoService;
+import com.tiago.appmercado.repository.ProdutoRepository;
+import com.tiago.appmercado.service.ProdutoServiceImp;
 
 @SpringBootTest
+@ActiveProfiles("test")
 public class ProdutoTests {
 
-	@Autowired
-	IProdutoService service;
-	//private static ProdutoServiceImp service;
-	private static Integer idFound = 1;
-	private static Integer idNotFound = 100;
-	private static Produto newProduct;
-	private static Produto createdProduct;
+	@InjectMocks
+	private ProdutoServiceImp serviceImp;
+	@Mock
+	private ProdutoRepository repository;
 
-	@BeforeAll
-	public static void setup() {
-		System.out.println("Configuração");
+	private Integer existingId = 1;
+	private Integer noExintingId = 100;
+	private String keyword = "bolacha";
+	private Produto newProduct;
+	private Produto createdProduct;
+	private ArrayList<Produto> listaVariosProdutos;
+
+	@BeforeEach
+	public void setup() throws Exception {
 		newProduct = new Produto();
 		newProduct.setNome("Bolacha");
 
 		createdProduct = new Produto();
-		createdProduct.setNome("Biscoito");
 		createdProduct.setId(1);
+		createdProduct.setNome("Bolacha");
 
-		/*service = Mockito.mock(ProdutoServiceImp.class);
-		Mockito.when(service.criarNovoProduto(createdProduct)).thenReturn(new Produto());
-		Mockito.when(service.buscarPorId(idFound)).thenReturn(createdProduct);
-		Mockito.when(service.buscarPorId(idNotFound)).thenReturn(null);
-		Mockito.when(service.buscarPorPalavraChava("b")).thenReturn(new ArrayList<Produto>());
-		Mockito.when(service.listarTodos()).thenReturn(new ArrayList<Produto>());
-		Mockito.when(service.alterarProduto(createdProduct)).thenReturn(createdProduct);*/
+		listaVariosProdutos = new ArrayList<>();
+		Produto p1, p2;
+		p1 = new Produto();
+		p1.setId(1);
+		p1.setNome("Bolacha");
+
+		p2 = new Produto();
+		p2.setId(2);
+		p2.setNome("Teclado");
+		listaVariosProdutos.add(p1);
+		listaVariosProdutos.add(p2);
+
+		Mockito.when(repository.save(newProduct)).thenReturn(createdProduct);
+		Mockito.when(repository.findById(existingId)).thenReturn(Optional.of(new Produto()));
+		Mockito.when(repository.findById(noExintingId)).thenReturn(Optional.ofNullable(null));
+		Mockito.when(repository.findAllByNomeContaining("Biscoito")).thenReturn(new ArrayList<Produto>());
+		Mockito.when(repository.findAllByNomeContaining(keyword)).thenReturn(listaVariosProdutos);
 	}
 
 	@Test
-	public void shouldStoreProduct() {
-		assertThat(service.criarNovoProduto(newProduct));
+	public void deveriaCadastrarProduto() {
+		Assertions.assertEquals(serviceImp.criarNovoProduto(newProduct), createdProduct);
+	}
+
+	@Test
+	public void deveriaRetornarPeloId() {
+		Assertions.assertNotNull(serviceImp.buscarPorId(existingId));
+	}
+
+	@Test
+	public void deveriaNaoEncontrarId() {
+		Assertions.assertNull(serviceImp.buscarPorId(noExintingId));
+	}
+
+	@Test
+	public void deveriaRetornarListaComPalavraChave() {
+		Assertions.assertTrue(serviceImp.buscarPorPalavraChava(keyword).size() > 0);
+	}
+
+	@Test
+	public void deveriaRetornarListaVazia() {
+		Assertions.assertTrue(serviceImp.buscarPorPalavraChava("Biscoito").size() == 0);
 	}
 
 }

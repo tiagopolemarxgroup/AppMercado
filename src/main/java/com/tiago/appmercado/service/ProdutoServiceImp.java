@@ -16,29 +16,30 @@ public class ProdutoServiceImp implements IProdutoService {
 
 	@Override
 	public Produto criarNovoProduto(Produto produto) {
+		if(produto.getNome() == null || produto.getNome().length() == 0) 
+			return null;
 		return repository.save(produto);
 	}
 
 	@Override
 	public Produto alterarProduto(Produto produto) {
-		return null;
+		this.buscarPorId(produto.getId());
+		return repository.save(produto);
 	}
 
 	@Override
 	public List<Produto> listarTodos() {
-		// TODO Auto-generated method stub
-		return null;
+		return (List<Produto>) repository.findAll();
 	}
 
 	@Override
 	public List<Produto> buscarPorPalavraChava(String key) {
-		// TODO Auto-generated method stub
-		return null;
+		return repository.findAllByNomeContaining(key);
 	}
 
 	@Override
 	public Produto buscarPorId(Integer id) {
-		return repository.findById(id).get();
+		return repository.findById(id).orElse(null);
 	}
 
 }
